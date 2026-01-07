@@ -13,7 +13,6 @@ app.use(express.json());
 
 // --- CORS Setup ---
 const allowedOrigins = [
-  'https://shop-kart-m758ol95v-swathideshmukhs-projects.vercel.app', // Current Vercel frontend
   'https://shop-kart-git-main-swathideshmukhs-projects.vercel.app', // Vercel production
   'http://localhost:3000' // Local development
 ];
