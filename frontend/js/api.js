@@ -1,5 +1,5 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://shopkart-tpug.onrender.com/api';
 
 // Helper function to make API requests
 async function apiRequest(endpoint, options = {}) {
