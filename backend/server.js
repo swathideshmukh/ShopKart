@@ -25,6 +25,11 @@ const corsOptions = {
       ? process.env.CORS_ORIGINS.split(',')
       : [];
     
+    // Allow all origins in development (when CORS_ORIGINS not set)
+    if (process.env.NODE_ENV !== 'production' && !process.env.CORS_ORIGINS) {
+      return callback(null, true);
+    }
+    
     if (localhostPattern.test(origin) || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
