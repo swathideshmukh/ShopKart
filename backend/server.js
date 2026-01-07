@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Load env vars
+// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -11,48 +11,46 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Enable CORS - support multiple environments
+// --- CORS Setup ---
+const allowedOrigins = [
+  'https://shop-kart-git-main-swathideshmukhs-projects.vercel.app', // Vercel production
+  'http://localhost:3000' // Local development
+];
+
+// Use env var if provided (comma-separated list)
+if (process.env.CORS_ORIGINS) {
+  allowedOrigins.push(...process.env.CORS_ORIGINS.split(','));
+}
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
+    // Allow requests with no origin (like curl, mobile apps)
     if (!origin) return callback(null, true);
-    
-    // Allow localhost for development
-    const localhostPattern = /localhost|127\.0\.0\.1:\d+/;
-    
-    // In production, allow your frontend domain
-    const allowedOrigins = process.env.CORS_ORIGINS 
-      ? process.env.CORS_ORIGINS.split(',')
-      : [];
-    
-    // Allow all origins in development (when CORS_ORIGINS not set)
-    if (process.env.NODE_ENV !== 'production' && !process.env.CORS_ORIGINS) {
-      return callback(null, true);
-    }
-    
-    if (localhostPattern.test(origin) || allowedOrigins.includes(origin)) {
+
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS blocked for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
 
-// Mount routes
+// --- Routes ---
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
 
-// Health check route
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'API is running' });
 });
 
-// Connect to MongoDB
+// --- MongoDB Connection ---
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
@@ -63,27 +61,27 @@ const connectDB = async () => {
   }
 };
 
-// Error handling middleware
-app.use((err, req, res, next) => {
+// --- Error Handling ---
+app.use((err, _req, res, _next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
     message: 'Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 
-// 404 handler
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
   });
 });
 
+// --- Start Server ---
 const PORT = process.env.PORT || 5000;
 
-// Start server
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
@@ -92,4 +90,3 @@ connectDB().then(() => {
 });
 
 module.exports = app;
-
