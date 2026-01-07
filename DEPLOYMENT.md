@@ -1,238 +1,236 @@
-# Deployment Guide
+# E-Commerce Store Deployment Guide
 
-## Quick Deploy Options
+## Quick Deploy to Vercel (Frontend) + Render (Backend)
 
-### Option 1: Vercel (Frontend) + Render (Backend)
+### Deploy Frontend to Vercel
 
-#### Deploy Backend to Render
+#### Step 1: Create Vercel Account
+1. Go to [vercel.com](https://vercel.com) and sign up (free tier works)
+2. Sign up using your GitHub account for easy integration
 
-1. **Create a Render Account**
-   - Go to [render.com](https://render.com) and sign up (free tier works)
+#### Step 2: Connect Your Repository
+1. Click "Add New..." → "Project"
+2. Select "Import Git Repository"
+3. Search for `swathideshmukh/ShopKart` or select it from the list
+4. Click "Import"
 
-2. **Create a Web Service**
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Set build command: `cd backend && npm install`
-   - Set start command: `cd backend && node server.js`
+#### Step 3: Configure Project Settings
+In the Vercel configuration screen:
+- **Framework Preset**: Other / No Framework
+- **Root Directory**: `frontend`
+- **Build Command**: Leave empty (not needed for static files)
+- **Output Directory**: Leave as default
+- **Install Command**: Leave empty
 
-3. **Configure Environment Variables**
-   In Render Dashboard, add these environment variables:
-   ```
-   PORT=443
-   MONGODB_URI=mongodb+srv://<your_connection_string>
-   JWT_SECRET=<generate_a_secure_random_string>
-   JWT_EXPIRE=7d
-   ```
-
-4. **Get Your MongoDB Connection String**
-   - Use [MongoDB Atlas](https://www.mongodb.com/atlas/database) (free tier)
-   - Create a cluster, database, and user
-   - Get your connection string: `mongodb+srv://username:password@cluster.mongodb.net/ecommerce-store?retryWrites=true&w=majority`
-
-5. **Deploy**
-   - Click "Create Web Service"
-   - Wait for deployment to complete
-   - Your backend will be available at `https://your-service-name.onrender.com`
-
-#### Deploy Frontend to Vercel
-
-1. **Create a Vercel Account**
-   - Go to [vercel.com](https://vercel.com) and sign up
-
-2. **Create a New Project**
-   - Click "Add New..." → "Project"
-   - Import your GitHub repository
-   - Set root directory to `frontend`
-   - Set output directory as default
-
-3. **Deploy**
-   - Click "Deploy"
-   - Your frontend will be available at `https://your-project.vercel.app`
-
-4. **Update API Base URL**
-   - Edit `frontend/js/api.js`
-   - Change `BASE_URL` to your Render backend URL:
-   ```javascript
-   const BASE_URL = 'https://your-backend-service.onrender.com/api';
-   ```
+#### Step 4: Deploy
+1. Click "Deploy"
+2. Wait for deployment to complete (~1-2 minutes)
+3. You'll get a live URL like: `https://shopkart.vercel.app`
 
 ---
 
-### Option 2: Railway (All-in-One)
+### Deploy Backend to Render
 
-1. **Create Railway Account**
-   - Go to [railway.app](https://railway.app) and sign up
+#### Step 1: Create Render Account
+1. Go to [render.com](https://render.com) and sign up (free tier works)
+2. Sign up using your GitHub account
 
-2. **Deploy Backend**
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Select your repository
-   - Set root directory to `backend`
-   - Add environment variables in Railway dashboard:
-     ```
-     PORT=8080
-     MONGODB_URI=<your_mongodb_atlas_connection_string>
-     JWT_SECRET=<secure_random_string>
-     JWT_EXPIRE=7d
-     ```
+#### Step 2: Create a Web Service
+1. Click "New +" → "Web Service"
+2. Connect your GitHub repository (`swathideshmukh/ShopKart`)
+3. Configure the service:
+   - **Name**: shopkart-backend (or your preferred name)
+   - **Branch**: main
+   - **Root Directory**: `backend`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
 
-3. **Deploy Frontend**
-   - Click "New Project" again
-   - Select "Deploy from GitHub repo"
-   - Set root directory to `frontend`
-   - Deploy
+#### Step 3: Configure Environment Variables
+In the Render dashboard, go to "Environment" tab and add:
 
-4. **Update Frontend API URL**
-   - Edit `frontend/js/api.js` with your Railway backend URL
+| Variable | Value |
+|----------|-------|
+| `PORT` | 443 |
+| `MONGODB_URI` | Your MongoDB Atlas connection string |
+| `JWT_SECRET` | Generate a secure random string |
+| `JWT_EXPIRE` | 7d |
+| `CORS_ORIGINS` | https://your-vercel-frontend.vercel.app |
 
----
+**To generate JWT_SECRET:**
+```bash
+# Windows (PowerShell)
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Min 0 -Max 255 }))
 
-### Option 3: Heroku (Backend) + Netlify (Frontend)
+# Or use an online generator
+# https://generate.plus/en/base64
+```
 
-#### Heroku Backend Deployment
-
-1. **Install Heroku CLI**
-   ```bash
-   npm install -g heroku
-   heroku login
-   ```
-
-2. **Create Heroku App**
-   ```bash
-   cd backend
-   heroku create your-app-name
-   ```
-
-3. **Set Environment Variables**
-   ```bash
-   heroku config:set MONGODB_URI="your_mongodb_connection_string"
-   heroku config:set JWT_SECRET="your_secure_secret"
-   heroku config:set JWT_EXPIRE="7d"
-   ```
-
-4. **Deploy**
-   ```bash
-   git add .
-   git commit -m "Deploy to Heroku"
-   git push heroku main
-   ```
-
-#### Netlify Frontend Deployment
-
-1. **Connect to Netlify**
-   - Go to [netlify.com](https://netlify.com)
-   - Click "Add new site" → "Import an existing project"
-   - Select your GitHub repository
-   - Set build command: `echo "No build needed"`
-   - Set publish directory: `frontend`
-
-2. **Update API URL**
-   - Edit `frontend/js/api.js` with your Heroku app URL
+#### Step 4: Deploy
+1. Click "Create Web Service"
+2. Wait for deployment to complete (~2-3 minutes)
+3. Your backend will be available at: `https://shopkart-backend.onrender.com`
 
 ---
 
-### Option 4: Docker Deployment
+### MongoDB Atlas Setup (Required)
 
-1. **Create Dockerfile in backend folder**
-   ```dockerfile
-   FROM node:20-alpine
-   WORKDIR /app
-   COPY package*.json ./
-   RUN npm install --production
-   COPY . .
-   EXPOSE 5000
-   CMD ["node", "server.js"]
-   ```
+#### Step 1: Create MongoDB Atlas Account
+1. Go to [mongodb.com/atlas](https://www.mongodb.com/atlas)
+2. Click "Try Free" and sign up
 
-2. **Create docker-compose.yml**
-   ```yaml
-   version: '3.8'
-   services:
-     backend:
-       build: ./backend
-       ports:
-         - "5000:5000"
-       environment:
-         - PORT=5000
-         - MONGODB_URI=mongodb://mongo:27017/ecommerce
-         - JWT_SECRET=your_secret_here
-         - JWT_EXPIRE=7d
-       depends_on:
-         - mongo
-     
-     mongo:
-       image: mongo:latest
-       ports:
-         - "27017:27017"
-       volumes:
-         - mongo-data:/data/db
+#### Step 2: Create Free Cluster
+1. Select "M0" (Free tier)
+2. Choose your cloud provider (AWS recommended)
+3. Select a region close to your users
+4. Click "Create Cluster" (takes 1-3 minutes)
 
-   volumes:
-     mongo-data:
-   ```
+#### Step 3: Create Database User
+1. Go to "Database Access" → "Add New Database User"
+2. Create username: `shopkart_admin`
+3. Create a strong password
+4. Save the password somewhere safe!
 
-3. **Deploy with Docker Compose**
-   ```bash
-   docker-compose up -d
-   ```
+#### Step 4: Configure Network Access
+1. Go to "Network Access" → "Add IP Address"
+2. Click "Allow Access from Anywhere" (0.0.0.0/0)
+3. This is required for cloud deployments
+
+#### Step 5: Get Connection String
+1. Click "Connect" → "Connect your application"
+2. Copy the connection string
+3. Replace `<password>` with your database user password:
+```
+mongodb+srv://shopkart_admin:YOUR_PASSWORD@cluster0.xxx.mongodb.net/ecommerce-store?retryWrites=true&w=majority
+```
 
 ---
 
-## MongoDB Atlas Setup (Required for All Deployments)
+### Update Frontend API URL
 
-1. **Create MongoDB Atlas Account**
-   - Go to [mongodb.com/atlas](https://www.mongodb.com/atlas)
-   - Click "Try Free" and sign up
+After deploying the backend, update the frontend to use your backend URL:
 
-2. **Create Free Cluster**
-   - Select "M0" (Free tier)
-   - Choose your cloud provider (AWS/Google/Azure)
-   - Create cluster (takes 1-3 minutes)
+1. Go to your GitHub repository
+2. Edit `frontend/js/api.js`
+3. Change the `API_BASE_URL`:
 
-3. **Create Database User**
-   - Go to "Database Access" → "Add New Database User"
-   - Create username/password
-   - Save credentials!
+```javascript
+// Before (local development)
+const API_BASE_URL = 'http://localhost:5000/api';
 
-4. **Configure Network Access**
-   - Go to "Network Access" → "Add IP Address"
-   - Click "Allow Access from Anywhere" (0.0.0.0/0) for development
+// After (production)
+const API_BASE_URL = 'https://shopkart-backend.onrender.com/api';
+```
 
-5. **Get Connection String**
-   - Click "Connect" → "Connect your application"
-   - Copy the connection string
-   - Replace `<password>` with your database user password
-   ```bash
-   mongodb+srv://username:password@cluster0.xxx.mongodb.net/ecommerce-store?retryWrites=true&w=majority
-   ```
+4. Commit and push the changes
+5. Vercel will automatically redeploy
 
 ---
 
-## Production Checklist
+### Complete Deployment Checklist
 
-- [ ] Use a secure JWT_SECRET (generate with `openssl rand -hex 32`)
-- [ ] Enable HTTPS in production
-- [ ] Set up proper CORS origins
-- [ ] Configure rate limiting
-- [ ] Set up logging and monitoring
-- [ ] Use environment variables for all secrets
-- [ ] Test thoroughly before going live
+- [ ] Frontend deployed to Vercel
+- [ ] Backend deployed to Render
+- [ ] MongoDB Atlas cluster created
+- [ ] Environment variables configured in Render
+- [ ] CORS origins configured for production frontend
+- [ ] Frontend API URL updated to production backend URL
+- [ ] Tested the full flow:
+  - [ ] Browse products
+  - [ ] Add items to cart
+  - [ ] Register/Login
+  - [ ] Place an order
 
 ---
 
-## Useful Commands
+### Troubleshooting
+
+#### Frontend Issues
+
+**CORS Errors:**
+- Ensure `CORS_ORIGINS` in Render includes your Vercel frontend URL
+- Format: `https://your-project.vercel.app` (no trailing slash)
+
+**API Not Loading:**
+- Check browser console for errors
+- Verify API URL in `frontend/js/api.js`
+- Ensure backend is deployed and running
+
+#### Backend Issues
+
+**MongoDB Connection Failed:**
+- Verify `MONGODB_URI` is correct
+- Check IP whitelist in MongoDB Atlas (0.0.0.0/0)
+- Ensure database user credentials are correct
+
+**JWT Errors:**
+- Verify `JWT_SECRET` is set in Render
+- Generate a new secret if needed
+
+**Build Failed:**
+- Check Render build logs
+- Ensure `package.json` has correct dependencies
+- Verify Node.js version compatibility
+
+---
+
+### Alternative Deployment Options
+
+#### Railway (All-in-One)
+1. Deploy `backend/` as one service
+2. Deploy `frontend/` as another service
+3. Use Railway's MongoDB plugin for database
+
+#### Heroku (Backend) + Vercel (Frontend)
+```bash
+# Install Heroku CLI
+npm install -g heroku
+
+# Deploy backend
+cd backend
+heroku create shopkart-api
+heroku config:set MONGODB_URI="your_connection_string"
+heroku config:set JWT_SECRET="your_secret"
+git push heroku main
+```
+
+#### Docker Deployment
+Create `backend/Dockerfile`:
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --production
+COPY . .
+EXPOSE 5000
+CMD ["node", "server.js"]
+```
+
+Deploy with Docker Compose or your preferred container service.
+
+---
+
+### Useful Commands
 
 ```bash
-# Generate secure JWT secret
-openssl rand -hex 32
+# View logs on Render
+# Go to Render Dashboard → Your Service → Logs
 
-# Check logs on Heroku
-heroku logs --tail
+# Restart backend on Render
+# Go to Render Dashboard → Your Service → Actions → Restart
 
-# Restart Heroku app
-heroku restart
+# Test backend API
+curl https://shopkart-backend.onrender.com/api/health
 
-# View environment variables on Render
-render env list
+# Generate secure JWT secret (Windows PowerShell)
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Min 0 -Max 255 }))
 ```
+
+---
+
+### Support
+
+- **Vercel Documentation**: https://vercel.com/docs
+- **Render Documentation**: https://render.com/docs
+- **MongoDB Atlas Documentation**: https://docs.atlas.mongodb.com
+- **GitHub Repository**: https://github.com/swathideshmukh/ShopKart
 
