@@ -1,0 +1,33 @@
+{
+  "name": "ecommerce-store",
+  "version": "1.0.0",
+  "description": "A simplified online store with user authentication, product browsing, shopping cart, and checkout functionality",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "install-all": "npm install && cd backend && npm install",
+    "seed": "curl -X POST http://localhost:5000/api/products/seed"
+  },
+  "keywords": [
+    "ecommerce",
+    "store",
+    "shopping",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
+
