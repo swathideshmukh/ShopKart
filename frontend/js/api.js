@@ -1,9 +1,16 @@
-// API Configuration
-const API_BASE_URL =
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000/api'
-    : 'https://shopkart-tpug.onrender.com/api';
+// ======================
+// API Configuration (PRODUCTION SAFE)
+// ======================
+
+const isLocal =
+  window.location.protocol === 'http:' &&
+  (window.location.hostname === 'localhost' ||
+   window.location.hostname === '127.0.0.1');
+
+const API_BASE_URL = isLocal
+  ? 'http://localhost:5000/api'
+  : 'https://shopkart-tpug.onrender.com/api';
+
 // Helper function to make API requests
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
