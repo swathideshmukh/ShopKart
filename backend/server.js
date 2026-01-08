@@ -3,89 +3,119 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
+// ======================
 // Load environment variables
+// ======================
 dotenv.config();
 
 const app = express();
 
-// Body parser
+// ======================
+// Middleware
+// ======================
 app.use(express.json());
 
-// --- CORS Setup ---
-const allowedOrigins = [
-  'https://shop-kart-git-main-swathideshmukhs-projects.vercel.app', // Vercel production
-  'http://localhost:3000' // Local development
+// ======================
+// CORS Configuration
+// ======================
+const defaultOrigins = [
+  'https://shop-kart-git-main-swathideshmukhs-projects.vercel.app',
+  'https://shopkart-tpug.onrender.com', // frontend if hosted on Render
+  'http://localhost:3000',
+  'http://localhost:5500'
 ];
 
-// Use env var if provided (comma-separated list)
-if (process.env.CORS_ORIGINS) {
-  allowedOrigins.push(...process.env.CORS_ORIGINS.split(','));
-}
+const envOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+  : [];
+
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, mobile apps)
+  origin: (origin, callback) => {
+    // Allow Postman / server-to-server (NO browser)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+
+    console.error(`❌ CORS blocked for origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
+// ✅ IMPORTANT: handle preflight requests
 app.use(cors(corsOptions));
 
-// --- Routes ---
+
+// ======================
+// Routes
+// ======================
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/orders'));
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'API is running' });
 });
 
-// --- MongoDB Connection ---
+// ======================
+// MongoDB Connection
+// ======================
 const connectDB = async () => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined in .env');
+    }
+
     const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error('❌ MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
 
-// --- Error Handling ---
+// ======================
+// Error Handling
+// ======================
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
+
+  // ⚠️ Always return CORS headers even on error
+  res.setHeader('Access-Control-Allow-Origin', _req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
   res.status(500).json({
     success: false,
-    message: 'Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    message: err.message || 'Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
 // 404 Handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
   });
 });
 
-// --- Start Server ---
+// ======================
+// Start Server
+// ======================
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`API available at http://localhost:${PORT}/api`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📡 API available at http://localhost:${PORT}/api`);
   });
 });
 
