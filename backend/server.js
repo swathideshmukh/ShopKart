@@ -20,6 +20,7 @@ app.use(express.json());
 // ======================
 const defaultOrigins = [
   'https://shop-kart-git-main-swathideshmukhs-projects.vercel.app',
+  'https://shop-kart-ten.vercel.app', // ✅ Added your Vercel deployment
   'https://shopkart-tpug.onrender.com', // frontend if hosted on Render
   'http://localhost:3000',
   'http://localhost:5500'
@@ -33,13 +34,10 @@ const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow Postman / server-to-server (NO browser)
-    if (!origin) return callback(null, true);
-
+    if (!origin) return callback(null, true); // Allow Postman / server-to-server
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
     console.error(`❌ CORS blocked for origin: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
@@ -48,9 +46,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// ✅ IMPORTANT: handle preflight requests
 app.use(cors(corsOptions));
-
 
 // ======================
 // Routes
@@ -73,7 +69,6 @@ const connectDB = async () => {
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI is not defined in .env');
     }
-
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
@@ -87,11 +82,6 @@ const connectDB = async () => {
 // ======================
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
-
-  // ⚠️ Always return CORS headers even on error
-  res.setHeader('Access-Control-Allow-Origin', _req.headers.origin || '*');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
   res.status(500).json({
     success: false,
     message: err.message || 'Server Error',
